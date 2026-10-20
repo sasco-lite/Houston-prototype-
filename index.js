@@ -17,7 +17,6 @@ async function connectDB() {
 }
 
 // --- MongoDB Schema ---
-// Schema updated with required fields from the document: zip, property type, lead source, and expanded project stages.[span_0](start_span)[span_0](end_span)
 const bookingSchema = new mongoose.Schema({
     name: { type: String, required: true, trim: true, maxlength: 100 },
     phone: { type: String, required: true, trim: true, maxlength: 20 },
@@ -52,8 +51,8 @@ const publicHTML = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Houston Roofing & Construction | Roof Replacement, Repair & Inspections[span_1](start_span)[span_1](end_span)</title>
-    <meta name="description" content="Residential, commercial and multi-family roofing in Houston; book a free inspection online and track the project from your dashboard.[span_2](start_span)[span_2](end_span)">
+    <title>Houston Roofing & Construction | Roof Replacement, Repair & Inspections</title>
+    <meta name="description" content="Residential, commercial and multi-family roofing in Houston; book a free inspection online and track the project from your dashboard.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         /* 80% Soft Flat Design */
@@ -140,26 +139,26 @@ const publicHTML = `
 <body>
 
     <nav class="glass nav-glass">
-        <div style="font-weight: 800; font-size: 1.2rem; color: var(--blue);">Houston Roofing[span_3](start_span)[span_3](end_span)</div>
+        <div style="font-weight: 800; font-size: 1.2rem; color: var(--blue);">Houston Roofing</div>
         <div class="nav-links" style="display: flex; gap: 20px; font-weight: 600;">
-            <a href="#services">Services[span_4](start_span)[span_4](end_span)</a>
-            <a href="#process">Why Us[span_5](start_span)[span_5](end_span)</a>
-            <a href="#reviews">Reviews[span_6](start_span)[span_6](end_span)</a>
-            <a href="#updates">Updates[span_7](start_span)[span_7](end_span)</a>
+            <a href="#services">Services</a>
+            <a href="#process">Why Us</a>
+            <a href="#reviews">Reviews</a>
+            <a href="#updates">Updates</a>
         </div>
         <div>
-            <a href="tel:+18322373737" class="clay-btn" style="background: var(--blue);">(832) 237-3737[span_8](start_span)[span_8](end_span)</a>
+            <a href="tel:+18322373737" class="clay-btn" style="background: var(--blue);">(832) 237-3737</a>
         </div>
     </nav>
 
     <header class="hero">
         <div class="glass" style="padding: 60px 40px; max-width: 900px; width: 90%;">
-            <span class="eyebrow">Houston roofing, done honestly[span_9](start_span)[span_9](end_span)</span>
-            <h1>A roof you can trust. A process you can see.[span_10](start_span)[span_10](end_span)</h1>
-            <p>Book a free inspection online, then follow every step of your project from your own dashboard.[span_11](start_span)[span_11](end_span) We inspect. We show you. You decide.[span_12](start_span)[span_12](end_span)</p>
+            <span class="eyebrow">Houston roofing, done honestly</span>
+            <h1>A roof you can trust. A process you can see.</h1>
+            <p>Book a free inspection online, then follow every step of your project from your own dashboard. We inspect. We show you. You decide.</p>
             <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                <a href="#booking" class="clay-btn" style="font-size: 1.1rem;">Book a free inspection[span_13](start_span)[span_13](end_span)</a>
-                <a href="tel:+18322373737" class="clay-btn" style="background: white; color: var(--blue); border: 1px solid var(--blue);">Call (832) 237-3737[span_14](start_span)[span_14](end_span)</a>
+                <a href="#booking" class="clay-btn" style="font-size: 1.1rem;">Book a free inspection</a>
+                <a href="tel:+18322373737" class="clay-btn" style="background: white; color: var(--blue); border: 1px solid var(--blue);">Call (832) 237-3737</a>
             </div>
         </div>
     </header>
@@ -169,50 +168,50 @@ const publicHTML = `
             <h2 style="text-align: center; margin-bottom: 40px; font-size: 2.5rem;">Our Process</h2>
             <div class="grid-2">
                 <div class="clay-card">
-                    <h3>1. Inspect[span_15](start_span)[span_15](end_span)</h3>
-                    <p>Examine shingles, flashing, vents, penetrations and trouble spots.[span_16](start_span)[span_16](end_span)</p>
+                    <h3>1. Inspect</h3>
+                    <p>Examine shingles, flashing, vents, penetrations and trouble spots.</p>
                 </div>
                 <div class="clay-card">
-                    <h3>2. Show[span_17](start_span)[span_17](end_span)</h3>
-                    <p>Share photos and plain-language notes in the customer dashboard.[span_18](start_span)[span_18](end_span)</p>
+                    <h3>2. Show</h3>
+                    <p>Share photos and plain-language notes in the customer dashboard.</p>
                 </div>
                 <div class="clay-card">
-                    <h3>3. Explain[span_19](start_span)[span_19](end_span)</h3>
-                    <p>Compare repair vs. replacement, cost, lifespan and insurance implications without pressure.[span_20](start_span)[span_20](end_span)</p>
+                    <h3>3. Explain</h3>
+                    <p>Compare repair vs. replacement, cost, lifespan and insurance implications without pressure.</p>
                 </div>
                 <div class="clay-card">
-                    <h3>4. Install[span_21](start_span)[span_21](end_span)</h3>
-                    <p>An in-house project manager oversees the job through cleanup (VERIFY).[span_22](start_span)[span_22](end_span)</p>
+                    <h3>4. Install</h3>
+                    <p>An in-house project manager oversees the job through cleanup (VERIFY).</p>
                 </div>
             </div>
         </div>
     </section>
 
     <section id="services">
-        <h2 style="text-align: center; margin-bottom: 40px; font-size: 2.5rem;">Services Advertised[span_23](start_span)[span_23](end_span)</h2>
+        <h2 style="text-align: center; margin-bottom: 40px; font-size: 2.5rem;">Services Advertised</h2>
         <div class="grid-3">
             <div class="clay-card">
-                <h3>Residential Asphalt & Metal[span_24](start_span)[span_24](end_span)</h3>
-                <p>Good/Better/Best options: from cost-conscious asphalt shingles[span_25](start_span)[span_25](end_span) to upgraded architectural shingles[span_26](start_span)[span_26](end_span) and long-life metal panels with strong heat reflection.[span_27](start_span)[span_27](end_span)</p>
+                <h3>Residential Asphalt & Metal</h3>
+                <p>Good/Better/Best options: from cost-conscious asphalt shingles to upgraded architectural shingles and long-life metal panels with strong heat reflection.</p>
             </div>
             <div class="clay-card">
-                <h3>Roof Repair & Storm/Hail[span_28](start_span)[span_28](end_span)</h3>
-                <p>Fast, honest roof repair and hail or storm damage assessments in Houston.[span_29](start_span)[span_29](end_span) Leak-source tracing, photos, and an honest repair-vs-replacement recommendation.[span_30](start_span)[span_30](end_span)</p>
+                <h3>Roof Repair & Storm/Hail</h3>
+                <p>Fast, honest roof repair and hail or storm damage assessments in Houston. Leak-source tracing, photos, and an honest repair-vs-replacement recommendation.</p>
             </div>
             <div class="clay-card">
-                <h3>Commercial & Multi-Family[span_31](start_span)[span_31](end_span)</h3>
-                <p>Flat, low-slope and metal systems, coatings, repairs, replacements and new construction planned around business operations.[span_32](start_span)[span_32](end_span) Phased replacement and resident-aware scheduling.[span_33](start_span)[span_33](end_span)</p>
+                <h3>Commercial & Multi-Family</h3>
+                <p>Flat, low-slope and metal systems, coatings, repairs, replacements and new construction planned around business operations. Phased replacement and resident-aware scheduling.</p>
             </div>
         </div>
     </section>
 
     <section id="insurance" style="background: var(--blue); color: white; max-width: 100%;">
         <div style="max-width: 1000px; margin: 0 auto; text-align: center;">
-            <h2 style="color: white; margin-bottom: 20px;">Storm Damage and Insurance Claim Guidance[span_34](start_span)[span_34](end_span)</h2>
-            <p style="margin-bottom: 20px;">Provide photos and a written roof-damage report for the owner to share with their insurer; owner files/manages the claim.[span_35](start_span)[span_35](end_span)</p>
+            <h2 style="color: white; margin-bottom: 20px;">Storm Damage and Insurance Claim Guidance</h2>
+            <p style="margin-bottom: 20px;">Provide photos and a written roof-damage report for the owner to share with their insurer; owner files/manages the claim.</p>
             <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);">
                 <p style="font-weight: 600; color: var(--orange);">Important Insurance Notice:</p>
-                <p>We are roofing contractors, not public insurance adjusters.[span_36](start_span)[span_36](end_span) We do not negotiate or settle claims on your behalf.[span_37](start_span)[span_37](end_span) You are responsible for your insurance deductible.[span_38](start_span)[span_38](end_span) Texas law prohibits contractors from waiving, rebating or absorbing a deductible.[span_39](start_span)[span_39](end_span)</p>
+                <p>We are roofing contractors, not public insurance adjusters. We do not negotiate or settle claims on your behalf. You are responsible for your insurance deductible. Texas law prohibits contractors from waiving, rebating or absorbing a deductible.</p>
             </div>
         </div>
     </section>
@@ -220,7 +219,7 @@ const publicHTML = `
     <section id="booking">
         <div class="glass" style="max-width: 800px; margin: 0 auto; padding: 40px;">
             <h2 style="text-align: center; margin-bottom: 10px;">Book Your Appointment</h2>
-            <p style="text-align: center; margin-bottom: 30px; color: #555;">Choose a service, select an open time, enter details and confirm.[span_40](start_span)[span_40](end_span)</p>
+            <p style="text-align: center; margin-bottom: 30px; color: #555;">Choose a service, select an open time, enter details and confirm.</p>
             
             <div id="alert"></div>
 
@@ -244,23 +243,23 @@ const publicHTML = `
                         <label>Service Type *</label>
                         <select id="serviceType" class="form-control" required>
                             <option value="">Select a service...</option>
-                            <option value="Free roof inspection">Free roof inspection[span_41](start_span)[span_41](end_span)</option>
-                            <option value="Free estimate">Free estimate[span_42](start_span)[span_42](end_span)</option>
-                            <option value="Storm/hail assessment">Storm/hail assessment[span_43](start_span)[span_43](end_span)</option>
-                            <option value="Repair visit">Repair visit[span_44](start_span)[span_44](end_span)</option>
-                            <option value="Commercial or multi-family walkthrough">Commercial or multi-family walkthrough[span_45](start_span)[span_45](end_span)</option>
-                            <option value="Phone consultation">Phone consultation[span_46](start_span)[span_46](end_span)</option>
+                            <option value="Free roof inspection">Free roof inspection</option>
+                            <option value="Free estimate">Free estimate</option>
+                            <option value="Storm/hail assessment">Storm/hail assessment</option>
+                            <option value="Repair visit">Repair visit</option>
+                            <option value="Commercial or multi-family walkthrough">Commercial or multi-family walkthrough</option>
+                            <option value="Phone consultation">Phone consultation</option>
                         </select>
                     </div>
                 </div>
                 <div class="grid-2" style="gap: 15px;">
                     <div class="form-group">
                         <label>Street Address *</label>
-                        <input type="text" id="address" class="form-control" required placeholder="11330 West Rd[span_47](start_span)[span_47](end_span)">
+                        <input type="text" id="address" class="form-control" required placeholder="11330 West Rd">
                     </div>
                     <div class="form-group">
                         <label>ZIP Code *</label>
-                        <input type="text" id="zip" class="form-control" required placeholder="77065[span_48](start_span)[span_48](end_span)">
+                        <input type="text" id="zip" class="form-control" required placeholder="77065">
                     </div>
                 </div>
                 <div class="grid-2" style="gap: 15px;">
@@ -268,26 +267,26 @@ const publicHTML = `
                         <label>Property Type *</label>
                         <select id="propertyType" class="form-control" required>
                             <option value="">Select property type...</option>
-                            <option value="Single-family home">Single-family home[span_49](start_span)[span_49](end_span)</option>
-                            <option value="Townhome">Townhome[span_50](start_span)[span_50](end_span)</option>
-                            <option value="Commercial building">Commercial building[span_51](start_span)[span_51](end_span)</option>
-                            <option value="Multi-family community">Multi-family community[span_52](start_span)[span_52](end_span)</option>
-                            <option value="Other">Other[span_53](start_span)[span_53](end_span)</option>
+                            <option value="Single-family home">Single-family home</option>
+                            <option value="Townhome">Townhome</option>
+                            <option value="Commercial building">Commercial building</option>
+                            <option value="Multi-family community">Multi-family community</option>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>How did you hear about us? (Optional)</label>
                         <select id="leadSource" class="form-control">
                             <option value="">Select source...</option>
-                            <option value="Google search">Google search[span_54](start_span)[span_54](end_span)</option>
-                            <option value="Google Ad">Google Ad[span_55](start_span)[span_55](end_span)</option>
-                            <option value="Facebook">Facebook[span_56](start_span)[span_56](end_span)</option>
-                            <option value="Instagram">Instagram[span_57](start_span)[span_57](end_span)</option>
-                            <option value="Referral">Referral[span_58](start_span)[span_58](end_span)</option>
-                            <option value="Radio">Radio[span_59](start_span)[span_59](end_span)</option>
-                            <option value="TV">TV[span_60](start_span)[span_60](end_span)</option>
-                            <option value="Direct mail">Direct mail[span_61](start_span)[span_61](end_span)</option>
-                            <option value="Other">Other[span_62](start_span)[span_62](end_span)</option>
+                            <option value="Google search">Google search</option>
+                            <option value="Google Ad">Google Ad</option>
+                            <option value="Facebook">Facebook</option>
+                            <option value="Instagram">Instagram</option>
+                            <option value="Referral">Referral</option>
+                            <option value="Radio">Radio</option>
+                            <option value="TV">TV</option>
+                            <option value="Direct mail">Direct mail</option>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                 </div>
@@ -302,12 +301,12 @@ const publicHTML = `
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Project Details / Notes (Optional)[span_63](start_span)[span_63](end_span)</label>
+                    <label>Project Details / Notes (Optional)</label>
                     <textarea id="description" class="form-control" rows="3" placeholder="Briefly describe the issue..."></textarea>
                 </div>
                 <div class="form-group" style="display: flex; gap: 10px; align-items: start;">
                     <input type="checkbox" id="consent" required style="margin-top: 5px;">
-                    <label for="consent" style="font-weight: 400; font-size: 0.85rem;">I agree that Houston Roofing & Construction may contact me about this appointment.[span_64](start_span)[span_64](end_span)</label>
+                    <label for="consent" style="font-weight: 400; font-size: 0.85rem;">I agree that Houston Roofing & Construction may contact me about this appointment.</label>
                 </div>
                 <button type="submit" class="clay-btn" style="width: 100%; font-size: 1.1rem; padding: 15px;" id="submitBtn">Submit Booking Request</button>
             </form>
@@ -315,13 +314,13 @@ const publicHTML = `
     </section>
 
     <footer>
-        <h2 style="color: white; margin-bottom: 15px;">Houston Roofing & Construction[span_65](start_span)[span_65](end_span)</h2>
-        <p>Email: <a href="mailto:[TODO - obtain from client]">[TODO - obtain from client][span_66](start_span)[span_66](end_span)</a> | Phone: <a href="tel:+18322373737">(832) 237-3737[span_67](start_span)[span_67](end_span)</a></p>
-        <p style="margin-top: 10px;">Address: 11330 West Rd, Houston, TX 77065[span_68](start_span)[span_68](end_span) | Maps link: [TODO - obtain Google Maps share link][span_69](start_span)[span_69](end_span)</p>
-        <p style="margin-top: 10px; font-size: 0.9rem;">Hours: every day, 7 a.m.–8 p.m. — VERIFY[span_70](start_span)[span_70](end_span)</p>
+        <h2 style="color: white; margin-bottom: 15px;">Houston Roofing & Construction</h2>
+        <p>Email: <a href="mailto:[TODO - obtain from client]">[TODO - obtain from client]</a> | Phone: <a href="tel:+18322373737">(832) 237-3737</a></p>
+        <p style="margin-top: 10px;">Address: 11330 West Rd, Houston, TX 77065 | Maps link: [TODO - obtain Google Maps share link]</p>
+        <p style="margin-top: 10px; font-size: 0.9rem;">Hours: every day, 7 a.m.–8 p.m. — VERIFY</p>
         
         <div class="legal-notice">
-            <strong>Legal & Insurance Disclosure:</strong> We are roofing contractors, not public insurance adjusters.[span_71](start_span)[span_71](end_span) We do not negotiate or settle claims on your behalf.[span_72](start_span)[span_72](end_span) You are responsible for your insurance deductible.[span_73](start_span)[span_73](end_span) Texas law prohibits contractors from waiving, rebating or absorbing a deductible.[span_74](start_span)[span_74](end_span)
+            <strong>Legal & Insurance Disclosure:</strong> We are roofing contractors, not public insurance adjusters. We do not negotiate or settle claims on your behalf. You are responsible for your insurance deductible. Texas law prohibits contractors from waiving, rebating or absorbing a deductible.
         </div>
 
         <div style="margin-top: 30px; opacity: 0.7; font-size: 0.9rem;">
@@ -364,7 +363,7 @@ const publicHTML = `
                 
                 if (res.ok) {
                     alertBox.className = 'alert-success';
-                    alertBox.innerText = 'Success! We have your request and will confirm your appointment.[span_75](start_span)[span_75](end_span)';
+                    alertBox.innerText = 'Success! We have your request and will confirm your appointment.';
                     document.getElementById('bookingForm').reset();
                 } else {
                     alertBox.className = 'alert-error';
