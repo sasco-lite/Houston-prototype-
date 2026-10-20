@@ -19,10 +19,11 @@ async function connectDB() {
     }
 }
 
-// Reuse or Re-init Schema
+// Reuse or Re-init Schema[span_76](start_span)[span_76](end_span)
 const bookingSchema = new mongoose.Schema({
-    name: String, phone: String, email: String, address: String, serviceType: String,
-    date: String, time: String, description: String, status: String
+    name: String, phone: String, email: String, address: String, zip: String,
+    propertyType: String, serviceType: String, date: String, time: String, 
+    description: String, leadSource: String, consent: Boolean, status: String
 }, { timestamps: true });
 const Booking = mongoose.models.Booking || mongoose.model('Booking', bookingSchema);
 
@@ -43,7 +44,7 @@ const generateLoginHTML = () => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Admin Login</title>
+    <meta charset="UTF-8"><title>Admin Login | Houston Roofing</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body { background: #1C3144; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -83,7 +84,7 @@ const generateDashboardHTML = () => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Admin Dashboard</title>
+    <meta charset="UTF-8"><title>Admin Dashboard | Houston Roofing[span_77](start_span)[span_77](end_span)</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #FDFBF7; --text: #2D3142; --orange: #F05D23; --blue: #1C3144; }
@@ -100,36 +101,37 @@ const generateDashboardHTML = () => `
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
         th { background: #f8f9fa; font-weight: 600; color: var(--blue); }
-        .status-select { padding: 6px; border-radius: 6px; border: 1px solid #ccc; font-weight: 600; }
-        .action-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-right: 5px; }
+        .status-select { padding: 6px; border-radius: 6px; border: 1px solid #ccc; font-weight: 600; max-width: 180px; }
+        .action-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-right: 5px; margin-bottom: 5px; }
         .btn-del { background: #fee2e2; color: #991b1b; }
         .btn-wa { background: #dcfce7; color: #166534; text-decoration: none; display: inline-block; }
     </style>
 </head>
 <body>
     <header>
-        <h2>Apex Admin</h2>
+        <h2>Houston Roofing Admin[span_78](start_span)[span_78](end_span)</h2>
         <button onclick="logout()">Logout</button>
     </header>
     <div class="container">
         <div class="stats">
             <div class="stat-card"><h3>Total Bookings</h3><div class="value" id="statTotal">0</div></div>
-            <div class="stat-card"><h3>Pending</h3><div class="value" id="statPending">0</div></div>
-            <div class="stat-card"><h3>Completed</h3><div class="value" id="statCompleted">0</div></div>
+            <div class="stat-card"><h3>Received Requests[span_79](start_span)[span_79](end_span)</h3><div class="value" id="statPending">0</div></div>
+            <div class="stat-card"><h3>Completed[span_80](start_span)[span_80](end_span)</h3><div class="value" id="statCompleted">0</div></div>
         </div>
 
-        <table>
+        <table style="display: block; overflow-x: auto;">
             <thead>
                 <tr>
                     <th>Date/Time</th>
                     <th>Customer Info</th>
-                    <th>Address</th>
+                    <th>Address Details</th>
+                    <th>Property / Source</th>
                     <th>Service / Details</th>
-                    <th>Status</th>
+                    <th>Project Stage[span_81](start_span)[span_81](end_span)</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="tableBody"><tr><td colspan="6" style="text-align:center;">Loading...</td></tr></tbody>
+            <tbody id="tableBody"><tr><td colspan="7" style="text-align:center;">Loading...</td></tr></tbody>
         </table>
     </div>
 
@@ -140,26 +142,35 @@ const generateDashboardHTML = () => `
             const data = await res.json();
             
             document.getElementById('statTotal').innerText = data.length;
-            document.getElementById('statPending').innerText = data.filter(b => b.status === 'Pending').length;
-            document.getElementById('statCompleted').innerText = data.filter(b => b.status === 'Completed').length;
+            document.getElementById('statPending').innerText = data.filter(b => b.status === 'Request received').length;
+            document.getElementById('statCompleted').innerText = data.filter(b => b.status === 'Complete').length;
 
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             
+            // Project stages mapped directly from the document requirements[span_82](start_span)[span_82](end_span)
+            const stages = [
+                'Request received', 'Inspection scheduled', 'Inspection complete', 
+                'Estimate delivered', 'Agreement signed', 'Permits and materials', 
+                'Install scheduled', 'Work in progress', 'Final inspection', 
+                'Warranty registered', 'Complete'
+            ]; //[span_83](start_span)[span_83](end_span)
+
             data.forEach(b => {
                 const tr = document.createElement('tr');
+                let optionsHTML = stages.map(stage => 
+                    \`<option value="\${stage}" \${b.status === stage ? 'selected' : ''}>\${stage}</option>\`
+                ).join('');
+
                 tr.innerHTML = \`
                     <td><strong>\${b.date}</strong><br>\${b.time}</td>
                     <td><strong>\${b.name}</strong><br>\${b.phone}<br>\${b.email || ''}</td>
-                    <td>\${b.address}</td>
+                    <td>\${b.address}<br>ZIP: \${b.zip}</td>
+                    <td><span style="font-weight:600;">\${b.propertyType}</span><br><small>\${b.leadSource || 'No source'}</small></td>
                     <td><strong>\${b.serviceType}</strong><br><small>\${b.description || 'No description'}</small></td>
                     <td>
                         <select class="status-select" onchange="updateStatus('\${b._id}', this.value)">
-                            <option value="Pending" \${b.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                            <option value="Confirmed" \${b.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
-                            <option value="In Progress" \${b.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-                            <option value="Completed" \${b.status === 'Completed' ? 'selected' : ''}>Completed</option>
-                            <option value="Cancelled" \${b.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                            \${optionsHTML}
                         </select>
                     </td>
                     <td>
