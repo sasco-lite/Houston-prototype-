@@ -1,7 +1,7 @@
 {
-  "name": "roofing-construction-website",
+  "name": "houston-roofing-construction-website",
   "version": "1.0.0",
-  "description": "Full-stack Roofing & Construction Business Website",
+  "description": "Full-stack Houston Roofing & Construction Business Website",
   "main": "index.js",
   "engines": {
     "node": "24.x"
