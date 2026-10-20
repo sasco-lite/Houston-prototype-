@@ -1,181 +1,323 @@
-// Public website + booking API. Exports the Express app (Vercel serverless; no app.listen).
-const express = require('express'), crypto = require('crypto'), { MongoClient } = require('mongodb');
-
-// ---- Client details: replace every [PLACEHOLDER] with verified information ----
-const C = {
-  name: '[BUSINESS NAME]', phone: '[PHONE e.g. +1 555 000 0000]', wa: '[WHATSAPP DIGITS ONLY]',
-  email: '[EMAIL]', address: '[BUSINESS ADDRESS]', area: '[SERVICE AREA]', hours: '[BUSINESS HOURS]',
-  url: process.env.SITE_URL || ''
-};
-const SERVICES = [
-  ['New Roof Installation', 'Complete roofing systems built to last.'],
-  ['Roof Repairs', 'Leaks, missing shingles and storm damage fixed fast.'],
-  ['Roof Replacement', 'Strip-off and replacement with clear, written scope.'],
-  ['Roof Inspections', 'A full check with photos and an honest report.'],
-  ['Gutters', 'Installation, repair and cleaning.'],
-  ['Renovations', 'Extensions and general construction work.']
-];
-const STATUSES = ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'];
+const express = require('express');
+const mongoose = require('mongoose');
 
 const app = express();
-app.disable('x-powered-by');
-app.set('trust proxy', true);
-app.use((q, r, n) => {
-  r.set({
-    'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains', 'Permissions-Policy': 'geolocation=(), camera=()',
-    'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
-  });
-  n();
+app.use(express.json());
+
+// --- Database Connection (Serverless Cached) ---
+let isConnected = false;
+async function connectDB() {
+    if (isConnected) return;
+    try {
+        const db = await mongoose.connect(process.env.MONGODB_URI, { maxPoolSize: 10 });
+        isConnected = db.connections[0].readyState === 1;
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+    }
+}
+
+// --- MongoDB Schema ---
+const bookingSchema = new mongoose.Schema({
+    name: { type: String, required: true, trim: true, maxlength: 100 },
+    phone: { type: String, required: true, trim: true, maxlength: 20 },
+    email: { type: String, trim: true, maxlength: 100 },
+    address: { type: String, required: true, trim: true, maxlength: 250 },
+    serviceType: { type: String, required: true },
+    date: { type: String, required: true },
+    time: { type: String, required: true },
+    description: { type: String, trim: true, maxlength: 1000 },
+    status: { type: String, default: 'Pending', enum: ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'] }
+}, { timestamps: true });
+
+const Booking = mongoose.models.Booking || mongoose.model('Booking', bookingSchema);
+
+// --- Public HTML & CSS (80:15:5 Design System) ---
+const publicHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Roofing & Construction | Professional Contractors</title>
+    <meta name="description" content="Expert roofing, repair, and construction services. Book a free estimate with Apex Roofing today.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* 80% Soft Flat Design */
+        :root {
+            --bg: #FDFBF7;
+            --text: #2D3142;
+            --orange: #F05D23;
+            --blue: #1C3144;
+            --light-blue: #E8EEF2;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+        h1, h2, h3 { color: var(--blue); font-weight: 800; }
+        a { text-decoration: none; color: inherit; }
+        section { padding: 80px 20px; max-width: 1200px; margin: 0 auto; }
+        
+        /* 15% Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+        }
+        .nav-glass { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); width: 95%; max-width: 1200px; z-index: 1000; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* 5% Claymorphism */
+        .clay-btn {
+            background: var(--orange); color: #FFF; padding: 12px 24px; border-radius: 14px; font-weight: 600; border: none; cursor: pointer;
+            box-shadow: 6px 6px 12px #d9d6d1, -6px -6px 12px #ffffff; transition: all 0.2s ease-in-out;
+        }
+        .clay-btn:hover { transform: translateY(-2px); }
+        .clay-btn:active { box-shadow: inset 4px 4px 8px #cc4f1e, inset -4px -4px 8px #ff6b28; transform: translateY(0); }
+        .clay-card {
+            background: var(--bg); border-radius: 20px; padding: 30px;
+            box-shadow: 8px 8px 16px #e6e4df, -8px -8px 16px #ffffff;
+        }
+
+        /* Layouts */
+        .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--light-blue) 0%, var(--bg) 100%); text-align: center; padding-top: 100px; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 20px; line-height: 1.2; }
+        .hero p { font-size: 1.2rem; margin-bottom: 30px; color: #555; max-width: 600px; margin-inline: auto; }
+        
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .service-icon { font-size: 2.5rem; margin-bottom: 15px; }
+        
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+        .form-control { width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid #ddd; background: #fff; font-size: 1rem; outline: none; transition: 0.3s; }
+        .form-control:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(28,49,68,0.1); }
+        
+        footer { background: var(--blue); color: white; padding: 60px 20px; text-align: center; }
+        footer a { color: var(--orange); }
+
+        #alert { display: none; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+        @media (max-width: 768px) { .hero h1 { font-size: 2.5rem; } .nav-links { display: none; } }
+    </style>
+    <!-- Local Business Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "RoofingContractor",
+      "name": "[Apex Roofing & Construction]",
+      "telephone": "[+1-555-123-4567]",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "[123 Construction Blvd]",
+        "addressLocality": "[City Name]",
+        "addressRegion": "[State]",
+        "postalCode": "[00000]",
+        "addressCountry": "[US]"
+      }
+    }
+    </script>
+</head>
+<body>
+
+    <nav class="glass nav-glass">
+        <div style="font-weight: 800; font-size: 1.2rem; color: var(--blue);">APEX ROOFING</div>
+        <div class="nav-links" style="display: flex; gap: 20px; font-weight: 600;">
+            <a href="#services">Services</a>
+            <a href="#about">About</a>
+            <a href="#booking">Book Estimate</a>
+        </div>
+        <div>
+            <a href="tel:[+15551234567]" class="clay-btn" style="background: var(--blue);">Call Now</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="glass" style="padding: 60px 40px; max-width: 800px; width: 90%;">
+            <h1>Protecting Your Home, From the Top Down.</h1>
+            <p>Premium roofing repairs, full replacements, and expert construction services across [Your Service Area]. Built to last, designed to impress.</p>
+            <a href="#booking" class="clay-btn" style="display: inline-block; font-size: 1.1rem;">Book a Free Estimate</a>
+        </div>
+    </header>
+
+    <section id="services">
+        <h2 style="text-align: center; margin-bottom: 40px; font-size: 2.5rem;">Our Expert Services</h2>
+        <div class="grid-3">
+            <div class="clay-card">
+                <div class="service-icon">🏠</div>
+                <h3>Roof Replacement</h3>
+                <p>Complete tear-offs and installations using premium architectural shingles, metal, or flat roofing materials.</p>
+            </div>
+            <div class="clay-card">
+                <div class="service-icon">🔧</div>
+                <h3>Leak Repair</h3>
+                <p>Fast, reliable emergency repairs to stop leaks, replace damaged flashing, and secure your home's integrity.</p>
+            </div>
+            <div class="clay-card">
+                <div class="service-icon">🌧️</div>
+                <h3>Gutters & Siding</h3>
+                <p>Seamless gutter installations and high-quality siding to protect your property from water damage.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" style="background: var(--light-blue); max-width: 100%; padding: 80px 20px;">
+        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+            <div class="clay-card">
+                <h2>Why Choose Apex?</h2>
+                <p style="margin-top: 15px; margin-bottom: 15px;">With over 15 years of experience, we provide transparent pricing, licensed professionals, and unparalleled craftsmanship. We treat every home as if it were our own.</p>
+                <ul style="list-style-position: inside; font-weight: 600;">
+                    <li>✓ Fully Licensed & Insured</li>
+                    <li>✓ Honest, Upfront Pricing</li>
+                    <li>✓ Premium Grade Materials</li>
+                    <li>✓ 10-Year Workmanship Warranty</li>
+                </ul>
+            </div>
+            <div class="glass" style="height: 300px; background-image: url('https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center;"></div>
+        </div>
+    </section>
+
+    <section id="booking">
+        <div class="glass" style="max-width: 700px; margin: 0 auto; padding: 40px;">
+            <h2 style="text-align: center; margin-bottom: 10px;">Request a Quote</h2>
+            <p style="text-align: center; margin-bottom: 30px; color: #555;">Fill out the details below and our team will contact you to confirm your appointment.</p>
+            
+            <div id="alert"></div>
+
+            <form id="bookingForm">
+                <div class="grid-3" style="grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="name" class="form-control" required placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number *</label>
+                        <input type="tel" id="phone" class="form-control" required placeholder="(555) 123-4567">
+                    </div>
+                </div>
+                <div class="grid-3" style="grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="email" class="form-control" placeholder="john@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Service Needed *</label>
+                        <select id="serviceType" class="form-control" required>
+                            <option value="">Select a service...</option>
+                            <option value="Roof Replacement">Roof Replacement</option>
+                            <option value="Roof Repair">Roof Repair</option>
+                            <option value="Inspection">Free Inspection</option>
+                            <option value="Gutters/Siding">Gutters & Siding</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Property Address *</label>
+                    <input type="text" id="address" class="form-control" required placeholder="123 Main St, City, ZIP">
+                </div>
+                <div class="grid-3" style="grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Preferred Date *</label>
+                        <input type="date" id="date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Preferred Time *</label>
+                        <input type="time" id="time" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Project Details (Optional)</label>
+                    <textarea id="description" class="form-control" rows="3" placeholder="Briefly describe the issue..."></textarea>
+                </div>
+                <button type="submit" class="clay-btn" style="width: 100%; font-size: 1.1rem; padding: 15px;" id="submitBtn">Submit Booking Request</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <h2 style="color: white; margin-bottom: 15px;">[Apex Roofing & Construction]</h2>
+        <p>Email: <a href="mailto:[info@apexroofing.placeholder.com]">[info@apexroofing.placeholder.com]</a> | Phone: <a href="tel:[+15551234567]">[+1 (555) 123-4567]</a></p>
+        <p style="margin-top: 10px;">Address: [123 Construction Blvd, City Name, State 00000]</p>
+        <div style="margin-top: 30px; opacity: 0.7; font-size: 0.9rem;">
+            &copy; 2024 [Apex Roofing & Construction]. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const alertBox = document.getElementById('alert');
+            btn.innerText = 'Submitting...';
+            btn.disabled = true;
+
+            const payload = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                address: document.getElementById('address').value,
+                serviceType: document.getElementById('serviceType').value,
+                date: document.getElementById('date').value,
+                time: document.getElementById('time').value,
+                description: document.getElementById('description').value,
+            };
+
+            try {
+                const res = await fetch('/api/bookings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                alertBox.style.display = 'block';
+                
+                if (res.ok) {
+                    alertBox.className = 'alert-success';
+                    alertBox.innerText = 'Success! Your booking request has been received.';
+                    document.getElementById('bookingForm').reset();
+                } else {
+                    alertBox.className = 'alert-error';
+                    alertBox.innerText = data.error || 'Something went wrong. Please try again.';
+                }
+            } catch (err) {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert-error';
+                alertBox.innerText = 'Network error. Please try again later.';
+            } finally {
+                btn.innerText = 'Submit Booking Request';
+                btn.disabled = false;
+            }
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>
+`;
+
+// --- Routes ---
+app.get('/', (req, res) => {
+    res.send(publicHTML);
 });
-app.use(express.json({ limit: '10kb' }));
 
-// ---- Cached MongoDB connection (reused across warm serverless invocations) ----
-const g = global.__mongo || (global.__mongo = {});
-async function db() {
-  if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is not set');
-  if (!g.p) g.p = new MongoClient(process.env.MONGODB_URI, { maxPoolSize: 5, serverSelectionTimeoutMS: 6000 }).connect().catch(e => { g.p = null; throw e; });
-  return (await g.p).db('roofing');
-}
-// Fixed-window rate limiter stored in MongoDB (works across serverless instances)
-async function hit(key, max, win) {
-  const c = (await db()).collection('ratelimits'), now = Date.now();
-  const d = await c.findOneAndUpdate({ _id: key, t: { $gt: now } }, { $inc: { n: 1 } }, { returnDocument: 'after' });
-  if (d) return d.n <= max;
-  await c.replaceOne({ _id: key }, { _id: key, n: 1, t: now + win }, { upsert: true });
-  return true;
-}
-const s = (v, m) => String(v ?? '').replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, m);
-const esc = v => String(v ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
-const ip = q => (q.headers['x-forwarded-for'] || q.ip || '').split(',')[0].trim();
-
-// Shared by the public form and the admin editor
-function validate(b, partial) {
-  const v = {}, e = [];
-  const f = (k, fn) => { if (!partial || k in b) fn(); };
-  f('name', () => { v.name = s(b.name, 80); if (v.name.length < 2) e.push('Enter your name.'); });
-  f('phone', () => { v.phone = s(b.phone, 25); const d = v.phone.replace(/\D/g, ''); if (!/^\+?[0-9\s\-().]+$/.test(v.phone) || d.length < 7 || d.length > 15) e.push('Enter a valid phone number.'); });
-  f('email', () => { v.email = s(b.email, 120).toLowerCase(); if (v.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)) e.push('Enter a valid email or leave it blank.'); });
-  f('address', () => { v.address = s(b.address, 200); if (v.address.length < 5) e.push('Enter the property address.'); });
-  f('service', () => { v.service = s(b.service, 60); if (!SERVICES.some(x => x[0] === v.service)) e.push('Choose a service.'); });
-  f('date', () => {
-    v.date = s(b.date, 10); const t = Date.parse(v.date + 'T00:00:00Z'), today = Date.parse(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(v.date) || isNaN(t) || (!partial && t < today) || t > today + 366 * 864e5) e.push('Choose a valid date within the next year.');
-  });
-  f('time', () => { v.time = s(b.time, 5); if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(v.time)) e.push('Choose a preferred time.'); });
-  f('description', () => { v.description = s(b.description, 1000); if (v.description.length < 10) e.push('Describe the job in at least 10 characters.'); });
-  return { v, e };
-}
-
-app.post('/api/bookings', async (q, r) => {
-  try {
-    if (q.body.website) return r.json({ ok: true, bookingId: 'BK-0' }); // honeypot: silently drop bots
-    if (!(await hit('book:' + ip(q), 5, 36e5))) return r.status(429).json({ error: 'Too many requests. Please call us instead.' });
-    const { v, e } = validate(q.body || {});
-    if (e.length) return r.status(400).json({ error: e[0], errors: e });
-    const col = (await db()).collection('bookings');
-    if (await col.findOne({ phone: v.phone, address: v.address, date: v.date, status: { $in: ['Pending', 'Confirmed'] } }))
-      return r.status(409).json({ error: 'A booking for this address and date already exists. We will contact you shortly.' });
-    const doc = { bookingId: 'BK-' + crypto.randomBytes(4).toString('hex').toUpperCase(), ...v, status: 'Pending', createdAt: new Date(), updatedAt: new Date() };
-    await col.insertOne(doc);
-    r.status(201).json({ ok: true, bookingId: doc.bookingId });
-  } catch (err) { console.error(err); r.status(500).json({ error: 'Could not save your booking. Please call us.' }); }
+app.post('/api/bookings', async (req, res) => {
+    await connectDB();
+    try {
+        const newBooking = new Booking(req.body);
+        await newBooking.save();
+        res.status(201).json({ success: true, bookingId: newBooking._id });
+    } catch (error) {
+        res.status(400).json({ error: 'Invalid data submitted. Please check your inputs.' });
+    }
 });
 
-require('./admin')(app, { db, hit, s, esc, ip, validate, STATUSES, SERVICES, C });
-
-const ph = C.phone.replace(/[^\d+]/g, ''), wa = 'https://wa.me/' + C.wa.replace(/\D/g, '');
-const ld = JSON.stringify({ '@context': 'https://schema.org', '@type': 'RoofingContractor', name: C.name, telephone: C.phone, email: C.email, address: C.address, areaServed: C.area, openingHours: C.hours, url: C.url }).replace(/</g, '\\u003c');
-const page = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(C.name)} | Roofing & Construction in ${esc(C.area)}</title>
-<meta name="description" content="${esc(C.name)} provides roof installation, repair, replacement, inspections and gutters in ${esc(C.area)}. Book a free estimate online.">
-<meta property="og:title" content="${esc(C.name)} | Roofing & Construction"><meta property="og:description" content="Book a free roofing estimate online."><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 17 16 5l14 12h-4v10H6V17z' fill='%23F26A1B'/%3E%3C/svg%3E">
-<script type="application/ld+json">${ld}</script>
-<style>
-:root{--bg:#FAF6F0;--card:#fff;--ink:#2B2F36;--mute:#5d6470;--or:#E85D0C;--or2:#FF8A3D;--bl:#14385C;--bl2:#1f5a94;--r:18px}
-*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:76px}
-body{margin:0;font:17px/1.6 "Trebuchet MS","Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--bg);animation:in .5s ease}
-@keyframes in{from{opacity:0}}h1,h2,h3{font-family:Georgia,"Times New Roman",serif;line-height:1.15;margin:0 0 .5em;color:var(--bl)}
-h1{font-size:clamp(2.2rem,6vw,3.8rem)}h2{font-size:clamp(1.7rem,4vw,2.4rem)}a{color:inherit}
-:focus-visible{outline:3px solid var(--or);outline-offset:3px}
-.w{max-width:1120px;margin:auto;padding:0 20px}section{padding:72px 0}
-nav{position:sticky;top:0;z-index:20;background:rgba(250,246,240,.92);backdrop-filter:blur(8px);box-shadow:0 1px 8px #0001}
-nav .w{display:flex;align-items:center;gap:16px;height:64px}.logo{font:700 1.15rem Georgia,serif;color:var(--bl);text-decoration:none;display:flex;gap:8px;align-items:center;margin-right:auto}
-nav ul{display:flex;gap:20px;list-style:none;margin:0;padding:0}nav ul a{text-decoration:none;font-weight:600}nav ul a:hover{color:var(--or)}
-.btn{display:inline-block;border:0;cursor:pointer;font:700 1rem inherit;font-family:inherit;text-decoration:none;padding:12px 22px;border-radius:999px;transition:transform .15s,box-shadow .15s}
-.clay{background:linear-gradient(145deg,var(--or2),var(--or));color:#fff;box-shadow:6px 6px 14px #e85d0c55,-3px -3px 8px #fff8,inset 2px 2px 5px #fff6,inset -3px -3px 6px #0002}
-.clay:hover{transform:translateY(-2px)}.clay:active{transform:translateY(1px)}.ghost{background:#fff;color:var(--bl);box-shadow:0 2px 8px #0002}
-#mb{display:none;background:none;border:0;font-size:1.6rem}
-.hero{background:linear-gradient(135deg,var(--bl),#0b2038 60%,#3a2a1c);color:#fff;padding:90px 0 80px;position:relative;overflow:hidden}
-.hero:before{content:"";position:absolute;right:-80px;top:-60px;width:420px;height:420px;border-radius:50%;background:radial-gradient(var(--or),transparent 70%);opacity:.45}
-.hero .w{position:relative;display:grid;grid-template-columns:1.3fr 1fr;gap:36px;align-items:center}.hero h1{color:#fff}.hero p{max-width:52ch;color:#e6ebf2}
-.glass{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:var(--r);padding:24px;box-shadow:0 8px 30px #0004}
-.glass p{margin:.3em 0}.row{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
-.card{background:var(--card);border-radius:var(--r);padding:26px;box-shadow:0 2px 12px #14385c14;border-top:4px solid var(--or)}.card:nth-child(even){border-top-color:var(--bl)}
-.card h3{font-size:1.25rem}.card p{margin:0;color:var(--mute)}
-.steps{counter-reset:s;list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
-.steps li{counter-increment:s;background:var(--card);padding:24px;border-radius:var(--r);box-shadow:0 2px 12px #14385c14}
-.steps li:before{content:counter(s);display:grid;place-items:center;width:38px;height:38px;border-radius:50%;margin-bottom:10px;font-weight:700;color:#fff;background:var(--bl)}
-.ph{aspect-ratio:4/3;border-radius:var(--r);display:grid;place-items:center;text-align:center;padding:14px;color:#fff;font-weight:600;background:linear-gradient(135deg,var(--bl2),var(--bl))}.ph:nth-child(2n){background:linear-gradient(135deg,var(--or2),#b9430a)}
-.alt{background:#fff}details{background:var(--bg);border-radius:12px;padding:14px 18px;margin-bottom:10px}summary{cursor:pointer;font-weight:700;color:var(--bl)}
-.book{display:grid;grid-template-columns:1fr 1.3fr;gap:36px;align-items:start}
-form{background:var(--card);padding:28px;border-radius:var(--r);box-shadow:0 6px 24px #14385c1f;display:grid;grid-template-columns:1fr 1fr;gap:14px}
-label{display:grid;gap:4px;font-weight:600;font-size:.92rem}.f{grid-column:1/-1}
-input,select,textarea{font:inherit;padding:11px 12px;border:1.5px solid #cfd4db;border-radius:10px;background:#fff;color:var(--ink)}textarea{min-height:96px;resize:vertical}
-.hp{position:absolute;left:-9999px}#msg{grid-column:1/-1;padding:12px;border-radius:10px;display:none;font-weight:600}#msg.ok{display:block;background:#e6f6ec;color:#17613a}#msg.err{display:block;background:#fdeaea;color:#9b1c1c}
-.note{font-size:.85rem;color:var(--mute)}footer{background:#1d2026;color:#cfd4db;padding:40px 0}footer a{color:#fff}
-.rv{opacity:0;transform:translateY(14px);transition:.6s}.rv.on{opacity:1;transform:none}
-@media(max-width:820px){.hero .w,.book{grid-template-columns:1fr}form{grid-template-columns:1fr}#mb{display:block}
-nav ul{display:none;position:absolute;top:64px;left:0;right:0;flex-direction:column;background:var(--bg);padding:16px 20px;box-shadow:0 8px 12px #0002}nav ul.open{display:flex}nav .cta{display:none}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.rv{opacity:1;transform:none}}
-</style></head><body>
-<nav aria-label="Main"><div class="w"><a class="logo" href="#top"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><path d="M2 17 16 5l14 12h-4v10H6V17z" fill="#E85D0C"/></svg>${esc(C.name)}</a>
-<ul id="menu"><li><a href="#services">Services</a></li><li><a href="#process">Process</a></li><li><a href="#gallery">Projects</a></li><li><a href="#area">Service area</a></li><li><a href="#faq">FAQ</a></li><li><a href="#book">Book</a></li></ul>
-<a class="btn ghost cta" href="tel:${esc(ph)}">Call ${esc(C.phone)}</a><a class="btn clay cta" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>
-<button id="mb" aria-label="Menu" aria-expanded="false">&#9776;</button></div></nav>
-<header class="hero" id="top"><div class="w"><div><h1>Roofs and building work you can rely on.</h1>
-<p>${esc(C.name)} repairs, replaces and installs roofs across ${esc(C.area)}. Tell us about your property and we will arrange a free estimate.</p>
-<div class="row"><a class="btn clay" href="#book">Book a free estimate</a><a class="btn ghost" href="tel:${esc(ph)}">Call now</a></div></div>
-<aside class="glass" aria-label="Contact details"><h3 style="color:#fff">Talk to us</h3><p>Phone: <a href="tel:${esc(ph)}">${esc(C.phone)}</a></p><p>Email: ${esc(C.email)}</p><p>Hours: ${esc(C.hours)}</p><p>Address: ${esc(C.address)}</p></aside></div></header>
-<section id="services"><div class="w"><h2>What we do</h2><div class="grid">${SERVICES.map(x => `<article class="card rv"><h3>${esc(x[0])}</h3><p>${esc(x[1])}</p></article>`).join('')}</div>
-<p class="note">Edit this list to match the services the business actually offers.</p></div></section>
-<section class="alt" id="about"><div class="w"><h2>About ${esc(C.name)}</h2><p style="max-width:65ch">[COMPANY INTRODUCTION: add verified history, team, licences and insurance details here.]</p></div></section>
-<section id="process"><div class="w"><h2>How it works</h2><ol class="steps"><li class="rv"><h3>Book online</h3>Send your details and preferred time.</li><li class="rv"><h3>Free estimate</h3>We inspect the roof and quote in writing.</li><li class="rv"><h3>The work</h3>We schedule and complete the job.</li><li class="rv"><h3>Sign-off</h3>We walk you through the finished work.</li></ol></div></section>
-<section class="alt" id="gallery"><div class="w"><h2>Recent projects</h2><div class="grid">${[1, 2, 3].map(i => `<div class="ph rv" role="img" aria-label="Project photo placeholder ${i}">[PROJECT PHOTO ${i}]</div>`).join('')}</div>
-<h3 style="margin-top:36px">What customers say</h3><p class="note">[ADD GENUINE CUSTOMER TESTIMONIALS HERE. None are invented.]</p></div></section>
-<section id="area"><div class="w"><h2>Where we work</h2><p style="max-width:65ch">We serve ${esc(C.area)}. Not sure if you are covered? Call ${esc(C.phone)}.</p></div></section>
-<section class="alt" id="faq"><div class="w"><h2>Questions</h2>
-<details><summary>Is the estimate free?</summary><p>[CONFIRM: describe your estimate policy.]</p></details>
-<details><summary>How soon can you visit?</summary><p>[CONFIRM: typical lead time.]</p></details>
-<details><summary>Do you offer emergency repairs?</summary><p>[CONFIRM: only keep this if applicable.]</p></details></div></section>
-<section id="book"><div class="w book"><div><h2>Book a free estimate</h2><p>Fill in the form and we will confirm your visit by phone. Prefer to talk? <a href="tel:${esc(ph)}"><strong>${esc(C.phone)}</strong></a></p></div>
-<form id="bf" novalidate><label>Full name<input name="name" required autocomplete="name" maxlength="80"></label><label>Phone<input name="phone" type="tel" required autocomplete="tel" maxlength="25"></label>
-<label class="f">Email (optional)<input name="email" type="email" autocomplete="email" maxlength="120"></label><label class="f">Property address<input name="address" required autocomplete="street-address" maxlength="200"></label>
-<label class="f">Service<select name="service" required><option value="">Choose a service</option>${SERVICES.map(x => `<option>${esc(x[0])}</option>`).join('')}</select></label>
-<label>Preferred date<input name="date" type="date" required></label><label>Preferred time<input name="time" type="time" required></label>
-<label class="f">Project description<textarea name="description" required maxlength="1000" placeholder="What needs doing?"></textarea></label>
-<input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true"><div id="msg" role="status"></div><button class="btn clay f" id="sb">Send booking request</button></form></div></section>
-<footer><div class="w"><strong>${esc(C.name)}</strong><br>${esc(C.address)} &middot; <a href="tel:${esc(ph)}">${esc(C.phone)}</a> &middot; ${esc(C.email)}<br><span class="note">&copy; ${new Date().getFullYear()} ${esc(C.name)}</span></div></footer>
-<script>
-const $=s=>document.querySelector(s),f=$('#bf'),m=$('#msg'),b=$('#sb');
-$('#mb').onclick=e=>{const o=$('#menu').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',o)};
-document.querySelectorAll('#menu a').forEach(a=>a.onclick=()=>$('#menu').classList.remove('open'));
-f.date.min=new Date().toISOString().slice(0,10);
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target)}}),{threshold:.15});
-document.querySelectorAll('.rv').forEach(x=>io.observe(x));
-f.onsubmit=async e=>{e.preventDefault();m.className='';m.style.display='none';
- if(!f.checkValidity()&&!f.email.value){m.className='err';m.textContent='Please complete all required fields.';return}
- b.disabled=true;b.textContent='Sending...';
- try{const r=await fetch('/api/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(f)))});
-  const d=await r.json().catch(()=>({}));
-  if(r.ok){m.className='ok';m.textContent='Thank you. Your booking ID is '+d.bookingId+'. We will contact you to confirm.';f.reset()}
-  else{m.className='err';m.textContent=d.error||'Something went wrong. Please call us.'}
- }catch(x){m.className='err';m.textContent='Network error. Check your connection or call us.'}
- b.disabled=false;b.textContent='Send booking request'};
-</script></body></html>`;
-app.get('/', (q, r) => r.type('html').send(page));
-app.get('/healthz', (q, r) => r.json({ ok: true }));
-app.use((q, r) => r.status(404).type('html').send('<h1>Page not found</h1><a href="/">Back to home</a>'));
 module.exports = app;
